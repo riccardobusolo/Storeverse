@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <title>Calcolo Prezzo di Vendita eBay</title>
+  <style>
+    body {
+      background: #f4f4f4;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 500px;
+      margin: 40px auto;
+      background: #fff;
+      padding: 20px 25px;
+      border-radius: 6px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin: 12px 0 5px;
+      font-weight: bold;
+    }
+    select, input[type="number"] {
+      width: 100%;
+      padding: 8px;
+      box-sizing: border-box;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    button {
+      padding: 10px 20px;
+      background: #3498db;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-top: 10px;
+    }
+    button:hover {
+      background: #2980b9;
+    }
+    #result {
+      margin-top: 20px;
+      padding: 10px;
+      background: #eef;
+      border: 1px dashed #ccc;
+      border-radius: 4px;
+      font-size: 15px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Calcolo Prezzo di Vendita</h1>
+
+  <!-- COSTO DI ACQUISTO -->
+  <label for="costo">Costo di acquisto (C) in €:</label>
+  <input type="number" id="costo" step="0.01" placeholder="Es: 10" />
+
+  <!-- COMMISSIONE EBAY: SCELTA CATEGORIA -->
+  <label for="categorieAlpha">Scegli la categoria (commissione eBay):</label>
+  <select id="categorieAlpha" onchange="setAlphaFromCategory()">
+    <option value="12" selected>Ricambi per moto e accessori (12%)</option>
+    <option value="12.5">Ricambi per auto (12,5%)</option>
+    <option value="6.5">Pneumatici e cerchi (6,5%)</option>
+    <option value="11">Home décor &amp; FMCG (11%)</option>
+    <option value="12">Giardino e arredamenti esterni (12%)</option>
+    <option value="12">Arredamento da giardino, piscine e capanni (12%)</option>
+    <option value="9.5">Casa e giardino: ricambi (9,5%)</option>
+    <option value="6.5">Tech: Dispositivi (6,5%)</option>
+    <option value="8.5">Tech: Accessori (8,5%)</option>
+    <option value="9.5">Altri accessori elettronici (9,5%)</option>
+    <option value="6.5">Carte collezionabili, personaggi da collezione (6,5%)</option>
+    <option value="11">Arte, Antiquariato, Giocattoli, Francobolli, Monete, Collezionismo (11%)</option>
+    <option value="6.5">Fumetti (6,5%)</option>
+    <option value="11">Orologi (11%)</option>
+    <option value="11">Gioielli (11%)</option>
+    <option value="11">Scarpe (11%)</option>
+    <option value="11">Borse e borsette (11%)</option>
+    <option value="6.5">Bellezza e salute (prodotti elettrici) (6,5%)</option>
+    <option value="11">Altre categorie, Abbigliamento, Bellezza e salute (11%)</option>
+    <option value="custom">-- Personalizzato --</option>
+  </select>
+
+  <!-- COMMISSIONE EBAY: INPUT MANUALE -->
+  <label for="alpha">Commissione eBay (in %):</label>
+  <input type="number" id="alpha" step="0.1" value="12" />
+
+  <!-- COMMISSIONE SPONSORIZZAZIONE (BETA) -->
+  <label for="beta">Commissione Sponsorizzazione (in %):</label>
+  <!-- min="2" per forzare un valore >= 2% -->
+  <input type="number" id="beta" step="0.1" value="2.3" min="2" />
+  
+  <!-- MARGINE DESIDERATO (M) -->
+  <label for="margine">Margine desiderato (in %):</label>
+  <input type="number" id="margine" step="0.1" value="30" />
+
+  <!-- ALIQUOTA FISCALE (T) -->
+  <label for="tasse">Aliquota fiscale (in %):</label>
+  <input type="number" id="tasse" step="0.1" value="35" />
+
+  <button onclick="calcolaPrezzo()">Calcola Prezzo</button>
+
+  <div id="result"></div>
+</div>
+
+<script>
+  /**
+   * Al cambio di selezione nel <select> categorieAlpha,
+   * se l'utente NON sceglie "custom", si imposta
+   * il valore del campo alpha corrispondente.
+   */
+  function setAlphaFromCategory() {
+    const select = document.getElementById("categorieAlpha");
+    const alphaInput = document.getElementById("alpha");
+
+    if (select.value !== "custom") {
+      alphaInput.value = select.value;  // Imposta la % al valore selezionato
+    } 
+    // Se è "custom", lasciamo che l'utente inserisca manualmente
+  }
+
+  function calcolaPrezzo() {
+    // Legge i valori in forma "intera" (percentuali intere)
+    const C     = parseFloat(document.getElementById("costo").value)   || 0;
+    const alpha = parseFloat(document.getElementById("alpha").value)   || 0; // in %
+    const beta  = parseFloat(document.getElementById("beta").value)    || 2; // in %, min = 2
+    const m     = parseFloat(document.getElementById("margine").value) || 0; // in %
+    const T     = parseFloat(document.getElementById("tasse").value)   || 35; // in %
+
+    // Conversione in decimali
+    const alphaDec = alpha / 100;
+    const betaDec  = beta / 100;
+    const mDec     = m / 100;
+    const TDec     = T / 100;
+
+    // Controlli e validazioni
+    if (C <= 0) {
+      document.getElementById("result").innerHTML =
+        "<span style='color:red'>Inserisci un costo di acquisto positivo.</span>";
+      return;
+    }
+    if ((alphaDec + betaDec) >= 1) {
+      document.getElementById("result").innerHTML =
+        "<span style='color:red'>Somma α + β >= 100%. Valori non validi.</span>";
+      return;
+    }
+    if (TDec >= 1) {
+      document.getElementById("result").innerHTML =
+        "<span style='color:red'>Aliquota fiscale T >= 100%. Valore non valido.</span>";
+      return;
+    }
+    
+    // Formula:
+    // P = [ ((1 + mDec)*C / (1 - TDec)) + 0.35 ] / [ 1 - (alphaDec + betaDec) ]
+    const denomTasse = 1 - TDec;
+    if (denomTasse <= 0) {
+      document.getElementById("result").innerHTML =
+        "<span style='color:red'>T deve essere < 100%.</span>";
+      return;
+    }
+
+    const numerator = ((1 + mDec) * C / denomTasse) + 0.35;
+    const denominator = 1 - (alphaDec + betaDec);
+
+    const P = numerator / denominator;
+
+    if (!isFinite(P) || P <= 0) {
+      document.getElementById("result").innerHTML =
+        "<span style='color:red'>Dati non validi o incongruenti.</span>";
+    } else {
+      document.getElementById("result").innerHTML =
+        "Prezzo di vendita consigliato: <strong>" + P.toFixed(2) + " €</strong>";
+    }
+  }
+</script>
+
+</body>
+</html>
